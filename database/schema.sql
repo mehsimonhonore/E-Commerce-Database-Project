@@ -205,3 +205,15 @@ CREATE TABLE product_promotions (
 	promotion_id UUID REFERENCES promotions(promotion_id) ON DELETE CASCADE,
 	PRIMARY KEY (product_id, promotion_id)
 );
+
+CREATE TABLE permissions (
+    permission_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    permission_name VARCHAR(100) UNIQUE NOT NULL,  -- e.g. 'issue_refund'
+    description TEXT
+);
+
+CREATE TABLE role_permissions (
+    role_id UUID REFERENCES admin_role(role_id) ON DELETE CASCADE,
+    permission_id UUID REFERENCES permissions(permission_id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+);
