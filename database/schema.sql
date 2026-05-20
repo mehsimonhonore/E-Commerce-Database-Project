@@ -12,7 +12,7 @@ CREATE TABLE customer (
     last_name    VARCHAR(50)  NOT NULL,
     email        VARCHAR(255) NOT NULL UNIQUE,
     phone_num    VARCHAR(20)  NOT NULL,
-    created_at   TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP
+    created_at   TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE vendor (
@@ -23,7 +23,7 @@ CREATE TABLE vendor (
     telephone_num      VARCHAR(13)  NOT NULL UNIQUE,
     business_address   TEXT         NOT NULL,
     is_verified        BOOLEAN      DEFAULT FALSE,
-    created_at         TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP
+    created_at         TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE categories (
@@ -40,10 +40,10 @@ CREATE TABLE coupons (
     minimum_order_amount INT         NOT NULL DEFAULT 0,
     usage_limit          INT,
     times_used           INT         DEFAULT 0,
-    starts_at            TIMESTAMPZ,
-    expires_at           TIMESTAMPZ,
+    starts_at            TIMESTAMPTZ,
+    expires_at           TIMESTAMPTZ,
     is_active            BOOLEAN     DEFAULT TRUE,
-    created_at           TIMESTAMPZ   DEFAULT CURRENT_TIMESTAMP
+    created_at           TIMESTAMPTZ   DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE promotions (
@@ -52,10 +52,10 @@ CREATE TABLE promotions (
     description    TEXT,
     discount_type  VARCHAR(20)  CHECK (discount_type IN ('percentage', 'fixed')),
     discount_value INT          NOT NULL,
-    starts_at      TIMESTAMPZ,
-    expires_at     TIMESTAMPZ,
+    starts_at      TIMESTAMPTZ,
+    expires_at     TIMESTAMPTZ,
     is_active      BOOLEAN      DEFAULT TRUE,
-    created_at     TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP
+    created_at     TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE admin (
@@ -64,16 +64,16 @@ CREATE TABLE admin (
     email         VARCHAR(255) NOT NULL UNIQUE,
     password_hash TEXT         NOT NULL,
     is_active     BOOLEAN      DEFAULT TRUE,
-    last_login    TIMESTAMPZ,
-    created_at    TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP
+    last_login    TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE permissions (
     permission_id   UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     permission_name VARCHAR(100) NOT NULL UNIQUE,
     description     TEXT,
-    created_at      TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP
+    created_at      TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -84,7 +84,7 @@ CREATE TABLE permissions (
 CREATE TABLE admin_permissions (
     admin_id      UUID      NOT NULL REFERENCES admin(admin_id)            ON DELETE CASCADE,
     permission_id UUID      NOT NULL REFERENCES permissions(permission_id) ON DELETE CASCADE,
-    granted_at    TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP,
+    granted_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (admin_id, permission_id)
 );
 
@@ -94,13 +94,13 @@ CREATE TABLE addresses (
     region       VARCHAR(20)  NOT NULL,
     city         VARCHAR(20)  NOT NULL,
     address_line VARCHAR(255) NOT NULL,
-    created_at   TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP
+    created_at   TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE carts (
     cart_id     UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID      NOT NULL UNIQUE REFERENCES customer(customer_id) ON DELETE CASCADE,
-    created_at  TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE product (
@@ -130,7 +130,7 @@ CREATE TABLE product_variants (
     prod_color     VARCHAR(30),
     prod_price     NUMERIC(12,2) CHECK (prod_price > 0),
     stock_quantity INT           NOT NULL CHECK (stock_quantity >= 0),
-    created_at     TIMESTAMPZ     DEFAULT CURRENT_TIMESTAMP
+    created_at     TIMESTAMPTZ     DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE reviews (
@@ -138,8 +138,8 @@ CREATE TABLE reviews (
     customer_id UUID      REFERENCES customer(customer_id) ON DELETE SET NULL,
     product_id  UUID      NOT NULL REFERENCES product(prod_id) ON DELETE CASCADE,
     comment     TEXT,
-    created_at  TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP,
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMPYZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (customer_id, product_id)
 );
 
@@ -153,7 +153,7 @@ CREATE TABLE orders (
     payment_status VARCHAR(20)   DEFAULT 'pending',
     order_status   VARCHAR(20)   DEFAULT 'pending',
     order_notes    TEXT,
-    placed_at      TIMESTAMPZ     DEFAULT CURRENT_TIMESTAMP
+    placed_at      TIMESTAMPTZ     DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -166,7 +166,7 @@ CREATE TABLE cart_items (
     cart_id     UUID      NOT NULL REFERENCES carts(cart_id)                ON DELETE CASCADE,
     prod_var_id UUID      NOT NULL REFERENCES product_variants(prod_var_id) ON DELETE CASCADE,
     quantity    INT       NOT NULL CHECK (quantity > 0),
-    added_at    TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP,
+    added_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (cart_id, prod_var_id)
 );
 
@@ -175,7 +175,7 @@ CREATE TABLE inventory (
     prod_var_id UUID      NOT NULL REFERENCES product_variants(prod_var_id) ON DELETE CASCADE,
     stock_in    INT       DEFAULT 0 CHECK (stock_in >= 0),
     stock_out   INT       DEFAULT 0 CHECK (stock_out >= 0),
-    updated_at  TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP
+    updated_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE order_items (
@@ -191,7 +191,7 @@ CREATE TABLE coupon_usages (
     coupon_id       UUID      REFERENCES coupons(coupon_id)    ON DELETE SET NULL,
     customer_id     UUID      REFERENCES customer(customer_id) ON DELETE SET NULL,
     order_id        UUID      REFERENCES orders(order_id)      ON DELETE CASCADE,
-    used_at         TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP
+    used_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE payment (
@@ -204,7 +204,7 @@ CREATE TABLE payment (
     amount                INT          NOT NULL CHECK (amount > 0),
     currency              VARCHAR(5)   DEFAULT 'XAF',
     payment_status        VARCHAR(20)  DEFAULT 'pending' CHECK (payment_status IN ('pending', 'successful', 'failed')),
-    created_at            TIMESTAMPZ    DEFAULT CURRENT_TIMESTAMP
+    created_at            TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE category_promotions (
