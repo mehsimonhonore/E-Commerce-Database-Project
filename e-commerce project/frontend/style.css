@@ -8,30 +8,29 @@ body {
     width: 100%;
     height: 100vh;
     font-family: 'Courier New', Courier, monospace;
-    
+    display: flex;
     align-items: center;
-    text-align: center;
     justify-content: center;
     background-image: url(./src/msk.jpg);
     background-size: cover;
     background-repeat: no-repeat;
     overflow: hidden;
-    z-index: -1;
     filter: blur(0.4px);
+    position: relative;
     
 }
 
 main {
-    z-index: 1;
-    filter: blur(0.5px);
+    position: relative;
     background-color: transparent;
     margin-left: 30%;
     margin-right: 30%;
-    padding: 20px 20px;
-    width: 60%;
+    padding: 40px 20px;
+    width: 90%;
+    max-width: 100%;
+    max-height: 100%;
     justify-content: center;
-    margin-top: 50%;
-    align-items: center;
+    text-align: center;
     border-radius: 20px;
     box-shadow: 4px 4px 7px rgb(249, 167, 15);
 }
