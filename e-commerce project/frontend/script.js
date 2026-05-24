@@ -6,6 +6,6 @@ function handlelogin() {
         alert("Please enter both user and password!");
     }
     else {
-        alert('Welcome back! ${username')
+        alert('Welcome back! ' + username);
     }
 }
