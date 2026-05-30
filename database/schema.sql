@@ -107,8 +107,8 @@ CREATE TABLE addresses (
 
 CREATE TABLE carts (
     cart_id       UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id   UUID        UNIQUE NOT NULLREFERENCES customer(customer_id)  ON DELETE CASCADE,
-    created_at    TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
+    customer_id   UUID        UNIQUE NOT NULL REFERENCES customer(customer_id)  ON DELETE CASCADE,
+    created_at    TIMESTAMPTZ   DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE product (
@@ -131,14 +131,6 @@ CREATE TABLE product_images (
     image_url TEXT NOT NULL
 );
 
-CREATE TABLE deliveries (
-    delivery_id     UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id        UUID        REFERENCES orders(order_id),
-    agent_id        UUID        REFERENCES delivery_agents(agent_id),
-    delivery_status VARCHAR(20),
-    assigned_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delivered_at    TIMESTAMP
-);
 
 
 CREATE TABLE product_variants (
@@ -157,7 +149,7 @@ CREATE TABLE reviews (
     product_id  UUID      NOT NULL REFERENCES product(prod_id) ON DELETE CASCADE,
     comment     TEXT,
     created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMPYZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (customer_id, product_id)
 );
 
@@ -174,6 +166,14 @@ CREATE TABLE orders (
     placed_at      TIMESTAMPTZ     DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE deliveries (
+    delivery_id     UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id        UUID        REFERENCES orders(order_id),
+    agent_id        UUID        REFERENCES delivery_agents(agent_id),
+    delivery_status VARCHAR(20),
+    assigned_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    delivered_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
 
 -- ==========================================
 -- LEVEL 4: Junction & Transactional Tables
@@ -185,7 +185,7 @@ CREATE TABLE cart_items (
     prod_var_id       UUID         NOT NULL  REFERENCES product_variants(prod_var_id) ON DELETE CASCADE,
     quantity          INT          NOT NULL
     CHECK(quantity > 0),
-    added_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    added_at          TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(cart_id, prod_var_id)
 );
 
@@ -235,7 +235,7 @@ CREATE TABLE payment (
         'failed',
         'refunded'
     )),
-    created_at         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+    created_at         TIMESTAMPTZ     DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE category_promotions (
