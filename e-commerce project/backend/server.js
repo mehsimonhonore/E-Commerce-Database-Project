@@ -1,58 +1,39 @@
 const express = require('express');
-const { Pool } = require('pg');
-
 const app = express();
 const port = 3000;
 
-// Database connection (YOUR FRIEND'S DATABASE)
-const pool = new Pool({
-    user: 'postgres',
-    password: 'trendora',
-    host: '162.19.128.36',      // Friend's IP
-    port: 5432,
-    database: 'ecommerce_db'
+// Parse incoming JSON request bodies
+app.use(express.json());
+
+// CORS — allows the frontend (opened from a different port or file)
+// to call this backend without being blocked by the browser
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
 });
 
-// Test the connection
-pool.connect((err) => {
-    if (err) {
-        console.log('❌ Database connection failed:', err.message);
-    } else {
-        console.log('✅ Connected to PostgreSQL!');
-    }
-});
+// Routes
+app.use('/api/auth',       require('./routes/auth'));
+app.use('/api/products',   require('./routes/products'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/cart',       require('./routes/cart'));
+app.use('/api/orders',     require('./routes/orders'));
+app.use('/api/payments',   require('./routes/payments'));
 
-// API: Get all products
-app.get('/api/products', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM product_name');
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// API: Get single product
-app.get('/api/products/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
-        const result = await pool.query('SELECT * FROM product_name WHERE id = $1', [id]);
-        if (result.rows.length === 0) {
-            res.status(404).json({ error: 'Product not found' });
-        } else {
-            res.json(result.rows[0]);
-        }
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Homepage
+// Health check
 app.get('/', (req, res) => {
-    res.send('E-Commerce Backend is running! Go to /api/products to see data');
+    res.json({ status: 'Trendora API is running', version: '1.0.0' });
+});
+
+// Global error handler — catches anything the routes don't handle
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong on the server.' });
 });
 
 app.listen(port, () => {
-    console.log(`🚀 Server running at http://localhost:${port}`);
-    console.log(`📦 Products API: http://localhost:${port}/api/products`);
+    console.log(`Server running at http://localhost:${port}`);
 });
