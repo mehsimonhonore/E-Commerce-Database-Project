@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const port = 3000;
+require('dotenv').config();
 
 // Parse incoming JSON request bodies
 app.use(express.json());
@@ -16,12 +17,13 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/auth',       require('./routes/auth'));
-app.use('/api/products',   require('./routes/products'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/cart',       require('./routes/cart'));
-app.use('/api/orders',     require('./routes/orders'));
-app.use('/api/payments',   require('./routes/payments'));
+
+app.use('/api/auth',       require('./auth'));
+app.use('/api/products',   require('./products'));
+app.use('/api/categories', require('./categories'));
+app.use('/api/cart',       require('./cart'));
+app.use('/api/orders',     require('./orders'));
+app.use('/api/payments',   require('./payments'));
 
 // Health check
 app.get('/', (req, res) => {

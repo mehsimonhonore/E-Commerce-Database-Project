@@ -15,6 +15,8 @@ CREATE TABLE customer (
     created_at   TIMESTAMPTZ    DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE customer ADD COLUMN password_hash TEXT NOT NULL DEFAULT '';
+
 CREATE TABLE vendor (
     vendor_id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     brand_name         VARCHAR(255) NOT NULL,
