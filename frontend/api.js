@@ -44,7 +44,7 @@ function logoutCustomer() {
 }
 
 function money(value) {
-    return `$${Number(value || 0).toFixed(2)}`;
+    return `${Number(value || 0).toLocaleString()} FCFA`;
 }
 
 function productImage(product, index = 0) {

@@ -43,9 +43,9 @@ function updateCartBadge() {
 function renderCart() {
     if (!cartItems.length) {
         cartList.innerHTML = '<p class="empty-state">Your shopping cart is empty.</p>';
-        subtotalAmount.textContent = '$0.00';
-        taxAmount.textContent = '$0.00';
-        totalAmountLabel.textContent = '$0.00';
+        subtotalAmount.textContent = '0 FCFA';
+        taxAmount.textContent = '0 FCFA';
+        totalAmountLabel.textContent = '0 FCFA';
         return;
     }
 

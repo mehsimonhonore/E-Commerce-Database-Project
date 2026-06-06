@@ -40,6 +40,9 @@ app.use('/api/categories', require('./categories'));
 app.use('/api/cart', require('./cart'));
 app.use('/api/orders', require('./orders'));
 app.use('/api/payments', require('./payments'));
+app.use('/api/support', require('./support'));
+app.use('/api/notifications', require('./notifications'));
+
 
 // API status
 app.get('/api', (req, res) => {

@@ -289,6 +289,20 @@ router.post('/', checkoutLimiter, async (req, res) => {
             [customer_id]
         );
 
+        // Create delivery entry
+        await client.query(
+            `INSERT INTO deliveries (order_id, delivery_status)
+             VALUES ($1, 'pending')`,
+            [order_id]
+        );
+
+        // Create transaction notification
+        await client.query(
+            `INSERT INTO notifications (customer_id, title, message)
+             VALUES ($1, 'Order Placed', 'Your order ' || $2 || ' of ' || $3 || ' FCFA was placed successfully.')`,
+            [customer_id, order_number, total.toFixed(2)]
+        );
+
         await client.query('COMMIT');
 
         res.status(201).json({
@@ -304,4 +318,275 @@ router.post('/', checkoutLimiter, async (req, res) => {
     }
 });
 
+// Mark order as delivered and process vendor payout
+router.put('/:order_id/deliver', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        
+        // Lock order row
+        const orderCheck = await client.query(
+            'SELECT * FROM orders WHERE order_id = $1 FOR UPDATE',
+            [req.params.order_id]
+        );
+        if (orderCheck.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Order not found.' });
+        }
+        const order = orderCheck.rows[0];
+        if (order.customer_id !== req.user.customer_id) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Unauthorized.' });
+        }
+        if (order.order_status === 'delivered') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Order already delivered.' });
+        }
+
+        // Update order status
+        await client.query(
+            `UPDATE orders SET order_status = 'delivered' WHERE order_id = $1`,
+            [req.params.order_id]
+        );
+
+        // Update delivery history
+        const deliveryCheck = await client.query(
+            'SELECT delivery_id FROM deliveries WHERE order_id = $1',
+            [req.params.order_id]
+        );
+        if (deliveryCheck.rows.length > 0) {
+            await client.query(
+                `UPDATE deliveries SET delivery_status = 'delivered', delivered_at = CURRENT_TIMESTAMP WHERE order_id = $1`,
+                [req.params.order_id]
+            );
+        } else {
+            await client.query(
+                `INSERT INTO deliveries (order_id, delivery_status, delivered_at) VALUES ($1, 'delivered', CURRENT_TIMESTAMP)`,
+                [req.params.order_id]
+            );
+        }
+
+        // Get vendors associated with order items
+        const items = await client.query(
+            `SELECT oi.quantity, oi.unit_price, p.vendor_id
+             FROM order_items oi
+             JOIN product_variants pv ON pv.prod_var_id = oi.prod_var_id
+             JOIN product p ON p.prod_id = pv.prod_id
+             WHERE oi.order_id = $1`,
+            [req.params.order_id]
+        );
+
+        // Process payouts (90% to vendor, 10% platform fee)
+        for (const item of items.rows) {
+            if (item.vendor_id) {
+                await client.query(
+                    'SELECT balance FROM vendor WHERE vendor_id = $1 FOR UPDATE',
+                    [item.vendor_id]
+                );
+                const payout = parseFloat(item.unit_price) * item.quantity * 0.90;
+                await client.query(
+                    'UPDATE vendor SET balance = balance + $1 WHERE vendor_id = $2',
+                    [payout, item.vendor_id]
+                );
+                await client.query(
+                    `INSERT INTO vendor_payouts (vendor_id, order_id, amount, status)
+                     VALUES ($1, $2, $3, 'paid')`,
+                    [item.vendor_id, req.params.order_id, payout]
+                );
+            }
+        }
+
+        // Log transaction notification
+        await client.query(
+            `INSERT INTO notifications (customer_id, title, message)
+             VALUES ($1, 'Order Delivered', 'Your order ' || $2 || ' has been delivered. Thank you!')`,
+            [order.customer_id, order.order_number]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Order marked as delivered and vendor payout processed.' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
+// Process order refund within 7 days
+router.post('/:order_id/refund', async (req, res) => {
+    const { reason } = req.body;
+    if (!reason) {
+        return res.status(400).json({ error: 'Reason for refund is required.' });
+    }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        
+        // Lock order row
+        const orderCheck = await client.query(
+            'SELECT * FROM orders WHERE order_id = $1 FOR UPDATE',
+            [req.params.order_id]
+        );
+        if (orderCheck.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Order not found.' });
+        }
+        const order = orderCheck.rows[0];
+        if (order.customer_id !== req.user.customer_id) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Unauthorized.' });
+        }
+        if (order.order_status === 'refunded' || order.order_status === 'cancelled') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Order already refunded or cancelled.' });
+        }
+
+        // Validate 7-day refund policy
+        const placedDate = new Date(order.placed_at);
+        const limitDate = new Date();
+        limitDate.setDate(limitDate.getDate() - 7);
+        if (placedDate < limitDate) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Refunds only allowed within 7 days of purchase.' });
+        }
+
+        // Log refund transaction
+        await client.query(
+            `INSERT INTO refunds (order_id, customer_id, reason, status, amount)
+             VALUES ($1, $2, $3, 'approved', $4)`,
+            [order.order_id, order.customer_id, reason, order.total_amount]
+        );
+
+        // Update statuses
+        await client.query(
+            `UPDATE orders SET order_status = 'refunded', payment_status = 'refunded' WHERE order_id = $1`,
+            [order.order_id]
+        );
+        await client.query(
+            `UPDATE payment SET payment_status = 'refunded' WHERE order_id = $1`,
+            [order.order_id]
+        );
+
+        // Restore stocks
+        const items = await client.query(
+            'SELECT prod_var_id, quantity FROM order_items WHERE order_id = $1',
+            [order.order_id]
+        );
+        for (const item of items.rows) {
+            await client.query(
+                `UPDATE product_variants SET stock_quantity = stock_quantity + $1 WHERE prod_var_id = $2`,
+                [item.quantity, item.prod_var_id]
+            );
+        }
+
+        // Create alert notification
+        await client.query(
+            `INSERT INTO notifications (customer_id, title, message)
+             VALUES ($1, 'Refund Processed', 'Refund of ' || $2 || ' FCFA was processed for order ' || $3)`,
+            [order.customer_id, order.total_amount, order.order_number]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Refund processed successfully.' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
+// Process product return within 7 days of delivery
+router.post('/:order_id/return', async (req, res) => {
+    const { reason, condition } = req.body;
+    if (!reason || !condition) {
+        return res.status(400).json({ error: 'Reason and condition are required.' });
+    }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Lock order row
+        const orderCheck = await client.query(
+            'SELECT * FROM orders WHERE order_id = $1 FOR UPDATE',
+            [req.params.order_id]
+        );
+        if (orderCheck.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Order not found.' });
+        }
+        const order = orderCheck.rows[0];
+        if (order.customer_id !== req.user.customer_id) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Unauthorized.' });
+        }
+        if (order.order_status !== 'delivered') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Only delivered orders can be returned.' });
+        }
+
+        // Check if return is within 7 days of delivery
+        const deliveryCheck = await client.query(
+            `SELECT delivered_at FROM deliveries WHERE order_id = $1 AND delivery_status = 'delivered'`,
+            [order.order_id]
+        );
+        if (deliveryCheck.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'No delivery record found.' });
+        }
+        
+        const deliveredDate = new Date(deliveryCheck.rows[0].delivered_at);
+        const limitDate = new Date();
+        limitDate.setDate(limitDate.getDate() - 7);
+        if (deliveredDate < limitDate) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Returns only allowed within 7 days of delivery.' });
+        }
+
+        // Log return request
+        await client.query(
+            `INSERT INTO returns (order_id, customer_id, reason, condition, status)
+             VALUES ($1, $2, $3, $4, 'approved')`,
+            [order.order_id, order.customer_id, reason, condition]
+        );
+
+        // Update status
+        await client.query(
+            `UPDATE orders SET order_status = 'returned' WHERE order_id = $1`,
+            [order.order_id]
+        );
+
+        // Restore stock if item condition is acceptable
+        if (condition === 'unopened' || condition === 'opened_unused') {
+            const items = await client.query(
+                'SELECT prod_var_id, quantity FROM order_items WHERE order_id = $1',
+                [order.order_id]
+            );
+            for (const item of items.rows) {
+                await client.query(
+                    `UPDATE product_variants SET stock_quantity = stock_quantity + $1 WHERE prod_var_id = $2`,
+                    [item.quantity, item.prod_var_id]
+                );
+            }
+        }
+
+        // Log return notification
+        await client.query(
+            `INSERT INTO notifications (customer_id, title, message)
+             VALUES ($1, 'Return Approved', 'Your return for order ' || $2 || ' has been approved.')`,
+            [order.customer_id, order.order_number]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Return processed successfully.' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
 module.exports = router;
+
