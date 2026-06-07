@@ -99,18 +99,13 @@ router.get('/:order_id', async (req, res) => {
 
         // Line items
         const items = await pool.query(
-            `SELECT
-                oi.items_id,
-                oi.quantity,
-                oi.unit_price,
-                p.prod_name,
-                pv.prod_size,
-                pv.prod_color,
-                v.vendor_name
+            `SELECT oi.items_id, oi.prod_var_id, oi.quantity, oi.unit_price, 
+                    p.prod_name, pv.prod_size, pv.prod_color, v.vendor_name,
+                    (SELECT image_url FROM product_images WHERE prod_id = p.prod_id LIMIT 1) AS image_url
              FROM order_items oi
-             JOIN product_variants pv ON pv.prod_var_id = oi.prod_var_id
-             JOIN product          p  ON p.prod_id      = pv.prod_id
-             JOIN vendor           v  ON v.vendor_id    = p.vendor_id
+             JOIN product_variants pv ON oi.prod_var_id = pv.prod_var_id
+             JOIN product p ON pv.prod_id = p.prod_id
+             JOIN vendor v ON p.vendor_id = v.vendor_id
              WHERE oi.order_id = $1`,
             [req.params.order_id]
         );
@@ -319,7 +314,7 @@ router.post('/', checkoutLimiter, async (req, res) => {
 });
 
 // Mark order as delivered and process vendor payout
-router.put('/:order_id/deliver', async (req, res) => {
+router.patch('/:order_id/deliver', async (req, res) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -399,8 +394,8 @@ router.put('/:order_id/deliver', async (req, res) => {
         // Log transaction notification
         await client.query(
             `INSERT INTO notifications (customer_id, title, message)
-             VALUES ($1, 'Order Delivered', 'Your order ' || $2 || ' has been delivered. Thank you!')`,
-            [order.customer_id, order.order_number]
+             VALUES ($1::uuid, $2, $3)`,
+            [order.customer_id, 'Order Delivered', `Your order ${order.order_number} has been delivered. Thank you!`]
         );
 
         await client.query('COMMIT');

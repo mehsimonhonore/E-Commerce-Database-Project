@@ -18,7 +18,8 @@ router.get('/', async (req, res) => {
                 p.prod_description,
                 c.cat_name,
                 v.vendor_name,
-                v.brand_name
+                v.brand_name,
+                (SELECT image_url FROM product_images WHERE prod_id = p.prod_id LIMIT 1) AS image_url
              FROM product p
              JOIN categories c ON p.cat_id    = c.cat_id
              JOIN vendor     v ON p.vendor_id = v.vendor_id
@@ -51,7 +52,8 @@ router.get('/search', async (req, res) => {
                 p.prod_description,
                 c.cat_name,
                 v.vendor_name,
-                v.brand_name
+                v.brand_name,
+                (SELECT image_url FROM product_images WHERE prod_id = p.prod_id LIMIT 1) AS image_url
              FROM product p
              JOIN categories c ON p.cat_id    = c.cat_id
              JOIN vendor     v ON p.vendor_id = v.vendor_id
@@ -79,7 +81,8 @@ router.get('/category/:cat_id', async (req, res) => {
                 p.price,
                 p.prod_description,
                 v.vendor_name,
-                v.brand_name
+                v.brand_name,
+                (SELECT image_url FROM product_images WHERE prod_id = p.prod_id LIMIT 1) AS image_url
              FROM product p
              JOIN vendor v ON p.vendor_id = v.vendor_id
              WHERE p.cat_id = $1
@@ -103,7 +106,8 @@ router.get('/:id', async (req, res) => {
                 p.prod_description,
                 c.cat_name,
                 v.vendor_name,
-                v.brand_name
+                v.brand_name,
+                (SELECT image_url FROM product_images WHERE prod_id = p.prod_id LIMIT 1) AS image_url
              FROM product p
              JOIN categories c ON p.cat_id    = c.cat_id
              JOIN vendor     v ON p.vendor_id = v.vendor_id

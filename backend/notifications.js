@@ -20,16 +20,16 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Mark all notifications as read
-router.post('/read', async (req, res) => {
+// Mark a specific notification as read
+router.patch('/:notif_id/read', async (req, res) => {
     try {
         await pool.query(
             `UPDATE notifications
              SET is_read = TRUE
-             WHERE customer_id = $1`,
-            [req.user.customer_id]
+             WHERE notification_id = $1 AND customer_id = $2`,
+            [req.params.notif_id, req.user.customer_id]
         );
-        res.json({ message: 'Notifications marked as read.' });
+        res.json({ message: 'Notification marked as read.' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

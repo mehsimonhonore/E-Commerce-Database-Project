@@ -14,7 +14,7 @@ router.post('/', async (req, res) => {
     try {
         const ticket = await pool.query(
             `INSERT INTO support_tickets (customer_id, subject, message)
-             VALUES ($1, $2, $3)
+             VALUES ($1::uuid, $2, $3)
              RETURNING *`,
             [req.user.customer_id, subject, message]
         );
@@ -23,8 +23,8 @@ router.post('/', async (req, res) => {
         // Immediate mock admin response
         await pool.query(
             `INSERT INTO ticket_responses (ticket_id, sender, message)
-             VALUES ($1, 'admin', 'Hello! Thank you for contacting Trendora Support. We have received your query regarding "' + $2 + '" and our team is looking into it.')`,
-            [ticketId, subject]
+             VALUES ($1, 'admin', $2)`,
+            [ticketId, `Hello! Thank you for contacting Trendora Support. We have received your query regarding "${subject}" and our team is looking into it.`]
         );
 
         res.status(201).json(ticket.rows[0]);
@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT * FROM support_tickets
-             WHERE customer_id = $1
+             WHERE customer_id = $1::uuid
              ORDER BY created_at DESC`,
             [req.user.customer_id]
         );
