@@ -1,0 +1,10 @@
+ID,Task Name,Start Date,End Date,Duration (days),% Complete,Tools / Extensions,Status
+1,Setup VS Code + Extensions,2026-05-02,2026-05-03,1,100,"REST Client, Thunder Client, ESLint, PostgreSQL extension",Complete
+2,Initialize frontend (HTML/CSS/JS),2026-06-05,2026-06-06,1,100,"VS Code Live Server",Complete
+3,Initialize backend (Node.js/Express),2026-06-04,2026-06-05,1,100,"VS Code, npm, nodemon",Complete
+4,Design PostgreSQL schema,2026-05-20,2026-05-27,7,100,"pgAdmin / VS Code SQL tools",Complete
+5,"Create DB & tables (users, products, orders)",2026-05-29,2026-06-07,9,100,"PostgreSQL, terminal/psql",Complete
+6,"Build API endpoints (products, cart, auth)",2026-06-04,2026-06-05,1,100,"Express, PostgreSQL driver, Thunder Client",Complete
+7,Connect frontend to API,2026-06-05,2026-06-05,0,100,"Fetch/Axios, VS Code",Complete
+8,"Test API with Thunder Client / REST Client",2026-06-04,2026-06-04,0,100,"Thunder Client extension",Complete
+9,"Run full integration test (FE + BE + DB)",2026-06-23,2026-06-25,3,0,"Live Server + nodemon",Not Started

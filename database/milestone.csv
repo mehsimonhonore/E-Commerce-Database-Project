@@ -1,0 +1,11 @@
+
+Milestone,Planned Date,Status
+VS Code + extensions ready,2026-05-02,Complete
+Project structure set up,2026-05-05,Complete
+Basic frontend pages done,2026-06-06,Complete
+Basic backend server running,2026-06-01,Complete
+Database schema designed,2026-06-03,Complete
+PostgreSQL schema & tables ready,2026-06-06,Pending
+All core API endpoints working,2026-06-06,Complete
+Frontend fully connected to API,2026-06-05,Complete
+E2E test passed,2026-06-08,Pending
