@@ -97,6 +97,47 @@
     <a href="#" onclick="togglePolicyModal(); return false;" style="color: var(--primary); font-weight: bold; text-decoration: none;">View Trendora Refund &amp; Return Policy</a>
   </div>
 
+  <!-- Payment Simulator Modal -->
+  <div id="payment-modal" class="modal-overlay" style="display: none; z-index: 3000;">
+    <div class="modal-content" style="max-width: 420px; text-align: center; padding: 2.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-md);">
+      <div id="payment-provider-logo" style="margin-bottom: 1rem; display: flex; justify-content: center; align-items: center; min-height: 80px;">
+        <!-- Injected logo -->
+      </div>
+      
+      <div id="payment-input-stage">
+        <h3 style="margin-bottom: 0.5rem; font-size: 1.4rem; font-weight: 700;">Confirm Payment</h3>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Paying <strong id="modal-payment-amount" style="color: var(--ink);">0 FCFA</strong> to <strong style="color: var(--accent);">Trendora Store</strong>
+        </p>
+        <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1.2rem; line-height: 1.4;">
+          A secure USSD payment prompt has been simulated for <strong id="modal-payment-phone"></strong>. Please enter your Mobile Money PIN to authorize the transaction.
+        </p>
+        <div style="margin-bottom: 1.5rem;">
+          <input type="password" id="momo-pin" placeholder="••••" maxlength="4" style="width: 160px; text-align: center; font-size: 2rem; letter-spacing: 0.5rem; padding: 0.5rem; border-radius: var(--radius-sm); border: 2px solid var(--line); outline: none; transition: var(--transition);" />
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <button type="button" class="btn-primary" id="momo-cancel-btn" style="flex: 1; background: #94a3b8; padding: 12px; border-radius: var(--radius-full); color: white; border: none; font-weight: 700; cursor: pointer; transition: var(--transition);">Cancel</button>
+          <button type="button" class="btn-primary" id="momo-confirm-btn" style="flex: 1; background: var(--primary); padding: 12px; border-radius: var(--radius-full); color: white; border: none; font-weight: 700; cursor: pointer; transition: var(--transition);">Confirm Pay</button>
+        </div>
+      </div>
+      
+      <div id="payment-processing-stage" style="display: none;">
+        <div class="spinner" style="border: 4px solid rgba(242, 127, 27, 0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 55px; height: 55px; margin: 2rem auto; animation: spin 1s linear infinite;"></div>
+        <h3 style="margin-bottom: 0.5rem; font-size: 1.2rem; font-weight: 700;">Processing Transaction</h3>
+        <p id="payment-status-text" style="color: var(--muted); font-size: 0.9rem; line-height: 1.4;">Sending prompt request to operator...</p>
+      </div>
+
+      <div id="payment-success-stage" style="display: none;">
+        <div style="color: var(--green); font-size: 4.5rem; margin-bottom: 1rem; animation: scaleUp 0.3s ease;">
+          <i class="fa fa-circle-check"></i>
+        </div>
+        <h3 style="color: var(--green); margin-bottom: 0.5rem; font-size: 1.4rem; font-weight: 700;">Payment Successful!</h3>
+        <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 1.5rem;">Your wallet was successfully debited. Order placed and processed.</p>
+        <button type="button" class="btn-primary" id="momo-success-done" style="width: 100%; background: var(--green); padding: 12px; border-radius: var(--radius-full); color: white; border: none; font-weight: 700; cursor: pointer; transition: var(--transition);">Go to My Orders</button>
+      </div>
+    </div>
+  </div>
+
   <footer>
     &copy; 2026 Trendora. All rights reserved. Premium Cameroon e-commerce platform.
   </footer>

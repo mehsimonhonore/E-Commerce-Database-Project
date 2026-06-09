@@ -170,24 +170,42 @@ applyPromoBtn?.addEventListener('click', async () => {
     }
 });
 
-checkoutBtn?.addEventListener('click', async () => {
+// ─── Payment Simulator Flow ───
+const paymentModal = document.getElementById('payment-modal');
+const inputStage = document.getElementById('payment-input-stage');
+const processingStage = document.getElementById('payment-processing-stage');
+const successStage = document.getElementById('payment-success-stage');
+const providerLogo = document.getElementById('payment-provider-logo');
+
+const modalAmount = document.getElementById('modal-payment-amount');
+const modalPhone = document.getElementById('modal-payment-phone');
+const pinInput = document.getElementById('momo-pin');
+const statusText = document.getElementById('payment-status-text');
+
+const momoCancelBtn = document.getElementById('momo-cancel-btn');
+const momoConfirmBtn = document.getElementById('momo-confirm-btn');
+const momoSuccessDone = document.getElementById('momo-success-done');
+
+let checkoutData = null;
+
+checkoutBtn?.addEventListener('click', () => {
     const address = addressInput.value.trim();
     const phone = paymentPhoneInput.value.trim();
     const method = paymentMethodSelect.value;
 
     if (!cartItems.length) {
-        alert('Your cart is empty.');
+        showToast('Your cart is empty.', 'error');
         return;
     }
 
     if (!address) {
-        alert('Please enter a delivery address.');
+        showToast('Please enter a delivery address.', 'warning');
         addressInput.focus();
         return;
     }
 
     if (!phone) {
-        alert('Please enter your payment phone number.');
+        showToast('Please enter your payment phone number.', 'warning');
         paymentPhoneInput.focus();
         return;
     }
@@ -195,33 +213,106 @@ checkoutBtn?.addEventListener('click', async () => {
     // Basic mobile money phone validation
     const phoneRegex = /^\+?[0-9]{7,15}$/;
     if (!phoneRegex.test(phone)) {
-        alert('Please enter a valid phone number (7-15 digits).');
+        showToast('Please enter a valid phone number (7-15 digits).', 'warning');
         paymentPhoneInput.focus();
         return;
     }
 
-    try {
-        checkoutBtn.disabled = true;
-        checkoutBtn.textContent = 'Processing payment...';
+    // Store data for submission
+    checkoutData = { address, phone, method };
 
+    // Setup modal logo & branding
+    if (method === 'MTN_MOMO') {
+        providerLogo.innerHTML = `
+            <div style="background: #FFCC00; color: #000; font-weight: 800; padding: 10px 20px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(255,204,0,0.3);">
+                <span style="background: #000; color: #FFCC00; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9rem;">MTN</span>
+                MTN Mobile Money
+            </div>
+        `;
+    } else {
+        providerLogo.innerHTML = `
+            <div style="background: #FF6600; color: #FFF; font-weight: 800; padding: 10px 20px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(255,102,0,0.3);">
+                <i class="fa fa-mobile-screen-button"></i>
+                Orange Money
+            </div>
+        `;
+    }
+
+    modalAmount.textContent = totalAmountLabel.textContent;
+    modalPhone.textContent = phone;
+    pinInput.value = '';
+
+    // Show input stage and hide other stages
+    inputStage.style.display = 'block';
+    processingStage.style.display = 'none';
+    successStage.style.display = 'none';
+    
+    // Display modal
+    paymentModal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 3000; animation: fadeIn 0.2s ease;';
+    pinInput.focus();
+});
+
+momoCancelBtn?.addEventListener('click', () => {
+    paymentModal.style.display = 'none';
+});
+
+momoConfirmBtn?.addEventListener('click', handleMomoPayment);
+pinInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleMomoPayment();
+});
+
+async function handleMomoPayment() {
+    const pin = pinInput.value.trim();
+    if (!pin || pin.length < 4) {
+        showToast('Please enter a valid 4-digit PIN.', 'warning');
+        pinInput.focus();
+        return;
+    }
+
+    // Shift to processing stage
+    inputStage.style.display = 'none';
+    processingStage.style.display = 'block';
+
+    try {
+        // Step 1 simulation
+        statusText.textContent = "Connecting to telecom operator gateway...";
+        await new Promise(r => setTimeout(r, 1200));
+
+        // Step 2 simulation
+        statusText.textContent = `Pushing authorization notification to ${checkoutData.phone}...`;
+        await new Promise(r => setTimeout(r, 1200));
+
+        // Step 3 simulation
+        statusText.textContent = "Verifying authentication PIN and wallet balance...";
+        await new Promise(r => setTimeout(r, 1200));
+
+        // Step 4: Actual API Order placement call
+        statusText.textContent = "PIN Authorized! Placing secure order on Trendora...";
+        
         const result = await apiRequest('/api/orders', {
             method: 'POST',
             body: JSON.stringify({
                 customer_id: customer.customer_id,
-                address_line: address,
-                payment_method: method,
+                address_line: checkoutData.address,
+                payment_method: checkoutData.method,
                 coupon_code: appliedCoupon ? appliedCoupon.code : null
             })
         });
 
-        alert(`Order ${result.order.order_number} placed successfully!`);
-        window.location.href = 'orders.html';
+        // Step 5: Finished
+        processingStage.style.display = 'none';
+        successStage.style.display = 'block';
 
     } catch (err) {
-        alert(err.message);
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = 'Proceed to Checkout';
+        showToast(err.message || 'Payment processing failed.', 'error');
+        processingStage.style.display = 'none';
+        inputStage.style.display = 'block';
     }
+}
+
+momoSuccessDone?.addEventListener('click', () => {
+    paymentModal.style.display = 'none';
+    window.location.href = 'orders.html';
 });
 
 // Search handler

@@ -114,19 +114,43 @@ function productImage(product, index = 0) {
     const name = (product.prod_name || product.name || '').toLowerCase();
     const cat  = (product.cat_name || '').toLowerCase();
 
-    if (name.includes('jean') || name.includes('denim') || name.includes('trouser') || name.includes('pant')) return '/src/jeans.png';
-    if (name.includes('shoe') || name.includes('sneaker') || name.includes('boot') || cat.includes('shoe')) return '/src/shoe.png';
-    if (name.includes('dress') || name.includes('skirt') || name.includes('gown'))  return '/src/dress.png';
-    if (name.includes('watch') || name.includes('accessory') || cat.includes('watch')) return '/src/watch.png';
-    if (name.includes('jacket') || name.includes('coat') || name.includes('blazer')) return '/src/jacket.png';
-    if (name.includes('hoodie') || name.includes('hoody') || name.includes('sweat') || name.includes('shirt') || name.includes('top')) return '/src/hoodie.png';
+    // Specific product names matching
+    if (name.includes('ankara')) return '/src/ankara_dress.png';
+    if (name.includes('sandal')) return '/src/sandals.png';
+    if (name.includes('moisturizer') || name.includes('shea butter')) return '/src/moisturizer.png';
+    if (name.includes('hair serum') || name.includes('argan oil') || name.includes('oil') || name.includes('cleanser') || name.includes('lotion')) return '/src/moisturizer.png';
+    if (name.includes('polo')) return '/src/polo_shirt.png';
+    if (name.includes('jogger')) return '/src/jogger_pants.png';
+    if (name.includes('belt')) return '/src/belt.png';
+
+    // General categories / names matching
+    if (name.includes('jean') || name.includes('denim') || name.includes('trouser') || name.includes('pant') || name.includes('chino') || name.includes('cargo')) {
+        return '/src/jeans.png';
+    }
+    if (name.includes('shoe') || name.includes('sneaker') || name.includes('boot') || name.includes('pump') || name.includes('heel') || cat.includes('shoe')) {
+        return '/src/shoe.png';
+    }
+    if (name.includes('dress') || name.includes('skirt') || name.includes('gown') || name.includes('blouse') || name.includes('wrap top') || name.includes('night dress')) {
+        return '/src/dress.png';
+    }
+    if (name.includes('watch') || name.includes('accessory') || name.includes('necklace') || name.includes('sunglasses') || name.includes('handbag') || name.includes('tote') || cat.includes('watch') || cat.includes('accessory')) {
+        return '/src/watch.png';
+    }
+    if (name.includes('jacket') || name.includes('coat') || name.includes('blazer')) {
+        return '/src/jacket.png';
+    }
+    if (name.includes('hoodie') || name.includes('hoody') || name.includes('sweat') || name.includes('shirt') || name.includes('t-shirt') || name.includes('top')) {
+        return '/src/hoodie.png';
+    }
+
     if (cat.includes('shoe'))    return '/src/shoe.png';
     if (cat.includes('watch'))   return '/src/watch.png';
     if (cat.includes('women'))   return '/src/dress.png';
     if (cat.includes('men'))     return '/src/hoodie.png';
+    if (cat.includes('beauty') || cat.includes('cosmetics')) return '/src/moisturizer.png';
 
     // Last resort: cycle through available images
-    const allImages = ['/src/shoe.png', '/src/hoodie.png', '/src/dress.png', '/src/watch.png', '/src/jacket.png', '/src/jeans.png'];
+    const allImages = ['/src/shoe.png', '/src/hoodie.png', '/src/dress.png', '/src/watch.png', '/src/jacket.png', '/src/jeans.png', '/src/moisturizer.png'];
     return allImages[index % allImages.length];
 }
 
